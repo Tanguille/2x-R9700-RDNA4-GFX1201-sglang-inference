@@ -87,14 +87,19 @@ jobs:
     permissions:
       contents: read
       packages: write
-    env:
-      IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/sglang-rdna4
-      CANDIDATE_TAG: ghcr.io/${{ github.repository_owner }}/sglang-rdna4:candidate-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           fetch-depth: 0
+      # GHCR repo names must be lowercase; github.repository_owner isn't (e.g. a fork
+      # owned by a mixed-case username), so compute it once here instead of failing
+      # the build on "repository name must be lowercase".
+      - name: Compute lowercase image name
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "IMAGE_NAME=ghcr.io/${owner}/sglang-rdna4" >> "$GITHUB_ENV"
+          echo "CANDIDATE_TAG=ghcr.io/${owner}/sglang-rdna4:candidate-${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
       - name: Move Docker data-root to /mnt
         run: |
           sudo systemctl stop docker
